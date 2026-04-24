@@ -5,12 +5,12 @@ import { buildMapHTML } from './map.js';
 /* ══════════════════════════════════════════════════════════════
    CONSTANTS
 ══════════════════════════════════════════════════════════════ */
-const ADMIN_PHONE = "919751789854";
-const ADMIN_PHONE2 = "919159192568";
+const ADMIN_PHONE = "+919751789854";
+const ADMIN_PHONE2 = "+918248267014";
 const ADMIN_EMAIL = "silambuvasantha@gmail.com";
 const ADMIN_NAME  = "RVS Catering Service";
 const ADMIN_ADDRESS = "Melaperumpallam, Karuvi, Tamil Nadu 609107";
-const BUSINESS_HOURS = "7AM – 10PM Daily";
+/*const BUSINESS_HOURS = "7AM – 10PM Daily";*/
 
 /* ══════════════════════════════════════════════════════════════
    TRANSLATIONS
@@ -635,7 +635,7 @@ function Hero({ setPg, lang }) {
             ))}
           </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 13, animation: "fadeUp .85s ease both" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(180px,45vw),1fr))", gap: 13, animation: "fadeUp .85s ease both" }}>
           {FUNCTIONS.slice(0, 4).map((fn, i) => (
             <Card key={fn.id} style={{ padding: "clamp(14px,2.2vw,24px)", textAlign: "center" }} onClick={() => setPg("booking")}>
               <div style={{ fontSize: "clamp(26px,3.2vw,42px)", marginBottom: 7, animation: "float " + (3.5 + i * .5) + "s ease-in-out infinite", animationDelay: (i * .3) + "s", display: "block" }}>{fn.icon}</div>
@@ -1548,7 +1548,7 @@ function Contact({ lang }) {
                 fontSize: 14,
                 fontWeight: 600
               }}>
-                {isTa ? "சு. சிலம்பிராசன் B.Sc" : "R. Silambuprassan B.Sc"}
+                {isTa ? "ரெ.சிலம்பரசன் B.Sc B.Ed" : "R.Silambarasan B.Sc B.Ed"}
               </div>
             </div>
           </div>
@@ -1726,6 +1726,7 @@ function Admin({ lang }) {
   const [tab, setTab] = useState("bookings");
   const [filter, setFilter] = useState("All");
   const [calMonth, setCalMonth] = useState(new Date());
+  const [slotView, setSlotView] = useState("daily");
 
   const updSt = (id, status) => {
     const u = bks.map(b => b.id === id ? { ...b, status } : b); DB.set("tc_bk", u); setBks(u);
@@ -1828,22 +1829,129 @@ function Admin({ lang }) {
 
       {tab === "slots" && (
         <div>
-          <p className={isTa ? "ta" : ""} style={{ color: "var(--mu)", marginBottom: 18, fontSize: 13.5 }}>{isTa ? "நேர இடங்களை தடு / திற. பச்சை = கிடைக்கும், சிவப்பு = தடுக்கப்பட்டது, நீலம் = முன்பதிவு." : "Block or unblock slots. Green = free, red = blocked, blue = booked."}</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-            {Array(8).fill(null).map((_, di) => {
-              const d = new Date(); d.setDate(d.getDate() + di); const ds = d.toISOString().split("T")[0];
-              const lbl = d.toLocaleDateString(isTa ? "ta-IN" : "en-IN", { weekday: "long", day: "numeric", month: "short" });
-              return (
-                <Card key={ds} style={{ padding: "clamp(13px,1.8vw,20px)" }} nohov>
-                  <div className="" style={{ color: "var(--sf)", fontWeight: 700, marginBottom: 11, fontSize: 14 }}>Date {lbl}</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-                    {TIME_SLOTS.map(tt => { const bl = (slots.blocked || []).includes(ds + "-" + tt); const bkd = bks.some(b => b.date === ds && b.time === tt && ["Approved", "Pending"].includes(b.status)); return (<button key={tt} disabled={bkd} onClick={() => togSlot(ds, tt)} style={{ padding: "7px 11px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: bkd ? "rgba(26,94,138,.15)" : bl ? "rgba(192,57,43,.14)" : "rgba(67,160,71,.1)", border: bkd ? "1px solid rgba(26,94,138,.3)" : bl ? "1px solid rgba(192,57,43,.3)" : "1px solid rgba(67,160,71,.24)", color: bkd ? "#5DADE2" : bl ? "#EF4444" : "#43A047", cursor: bkd ? "not-allowed" : "pointer" }}>{tt} {bkd ? "Booked" : bl ? "Blocked" : "Free"}</button>); })}
-                  </div>
-                  <div style={{ marginTop: 8, fontSize: 11, color: "var(--mu2)" }}>Available: {TIME_SLOTS.filter(tt => !(slots.blocked || []).includes(ds + "-" + tt) && !bks.some(b => b.date === ds && b.time === tt && ["Approved", "Pending"].includes(b.status))).length}/{TIME_SLOTS.length}</div>
-                </Card>
-              );
-            })}
+          <div style={{ display: "flex", gap: 7, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+            <p className={isTa ? "ta" : ""} style={{ color: "var(--mu)", fontSize: 13.5 }}>
+              {slotView === "daily" 
+                ? (isTa ? "நேர இடங்களை தடு / திற. பச்சை = கிடைக்கும், சிவப்பு = தடுக்கப்பட்டது, நீலம் = முன்பதிவு." : "Block or unblock time slots. Green = free, red = blocked, blue = booked.")
+                : (isTa ? "மாதம் முழுவதும் தடு/திற. இந்த மாதம் எல்லா நாட்களையும் பொருட்படுத்துகிறது." : "Block entire months. Blocks all dates in selected month.")}
+            </p>
+            <div style={{ marginLeft: "auto", display: "flex", gap: 7 }}>
+              <button onClick={() => setSlotView("daily")} className={isTa ? "ta" : ""} style={{ padding: "6px 14px", borderRadius: 18, fontSize: 12, fontWeight: 700, background: slotView === "daily" ? "rgba(232,135,26,.15)" : "rgba(255,255,255,.03)", color: slotView === "daily" ? "var(--sf)" : "var(--mu)", border: slotView === "daily" ? "1px solid rgba(232,135,26,.28)" : "1px solid rgba(255,255,255,.07)", cursor: "pointer" }}>{isTa ? "அன்றாட" : "Daily"}</button>
+              <button onClick={() => setSlotView("monthly")} className={isTa ? "ta" : ""} style={{ padding: "6px 14px", borderRadius: 18, fontSize: 12, fontWeight: 700, background: slotView === "monthly" ? "rgba(232,135,26,.15)" : "rgba(255,255,255,.03)", color: slotView === "monthly" ? "var(--sf)" : "var(--mu)", border: slotView === "monthly" ? "1px solid rgba(232,135,26,.28)" : "1px solid rgba(255,255,255,.07)", cursor: "pointer" }}>{isTa ? "மாதம்" : "Monthly"}</button>
+            </div>
           </div>
+
+          {slotView === "daily" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+              {Array(8).fill(null).map((_, di) => {
+                const d = new Date(); d.setDate(d.getDate() + di); const ds = d.toISOString().split("T")[0];
+                const lbl = d.toLocaleDateString(isTa ? "ta-IN" : "en-IN", { weekday: "long", day: "numeric", month: "short" });
+                return (
+                  <Card key={ds} style={{ padding: "clamp(13px,1.8vw,20px)" }} nohov>
+                    <div className="" style={{ color: "var(--sf)", fontWeight: 700, marginBottom: 11, fontSize: 14 }}>Date {lbl}</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                      {TIME_SLOTS.map(tt => { const bl = (slots.blocked || []).includes(ds + "-" + tt); const bkd = bks.some(b => b.date === ds && b.time === tt && ["Approved", "Pending"].includes(b.status)); return (<button key={tt} disabled={bkd} onClick={() => togSlot(ds, tt)} style={{ padding: "7px 11px", borderRadius: 7, fontSize: 12, fontWeight: 700, background: bkd ? "rgba(26,94,138,.15)" : bl ? "rgba(192,57,43,.14)" : "rgba(67,160,71,.1)", border: bkd ? "1px solid rgba(26,94,138,.3)" : bl ? "1px solid rgba(192,57,43,.3)" : "1px solid rgba(67,160,71,.24)", color: bkd ? "#5DADE2" : bl ? "#EF4444" : "#43A047", cursor: bkd ? "not-allowed" : "pointer" }}>{tt} {bkd ? "Booked" : bl ? "Blocked" : "Free"}</button>); })}
+                    </div>
+                    <div style={{ marginTop: 8, fontSize: 11, color: "var(--mu2)" }}>Available: {TIME_SLOTS.filter(tt => !(slots.blocked || []).includes(ds + "-" + tt) && !bks.some(b => b.date === ds && b.time === tt && ["Approved", "Pending"].includes(b.status))).length}/{TIME_SLOTS.length}</div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
+          {slotView === "monthly" && (
+            <div>
+              <div style={{ display: "flex", gap: 8, marginBottom: 18, justifyContent: "center", flexWrap: "wrap" }}>
+                <button onClick={() => setCalMonth(d => new Date(d.getFullYear(), d.getMonth() - 1))} style={{ background: "rgba(232,135,26,.1)", border: "1px solid rgba(232,135,26,.22)", color: "var(--sf)", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 700 }}>← Prev</button>
+                <span className="en-h" style={{ minWidth: 200, textAlign: "center", fontSize: 15, fontWeight: 700, color: "var(--cr)" }}>Select Date or Month</span>
+                <button onClick={() => setCalMonth(d => new Date(d.getFullYear(), d.getMonth() + 1))} style={{ background: "rgba(232,135,26,.1)", border: "1px solid rgba(232,135,26,.22)", color: "var(--sf)", padding: "6px 14px", borderRadius: 7, cursor: "pointer", fontSize: 12, fontWeight: 700 }}>Next →</button>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(clamp(200px,28vw,280px),1fr))", gap: 14 }}>
+                {Array(12).fill(null).map((_, mi) => {
+                  const d = new Date(calMonth.getFullYear(), calMonth.getMonth() + mi);
+                  const yr = d.getFullYear(); const mo = d.getMonth();
+                  const fd = new Date(yr, mo, 1).getDay();
+                  const dm = new Date(yr, mo + 1, 0).getDate();
+                  const monthKey = yr + "-" + String(mo + 1).padStart(2, "0");
+                  const isMonthBlocked = (slots.blockedMonths || []).includes(monthKey);
+                  const blockedDates = slots.blockedDates || [];
+                  const monLbl = d.toLocaleString("default", { month: "short", year: "numeric" });
+                  
+                  return (
+                    <Card 
+                      key={monthKey}
+                      style={{ 
+                        padding: "14px 12px", 
+                        cursor: "pointer",
+                        background: isMonthBlocked ? "rgba(192,57,43,.15)" : "rgba(232,135,26,.06)",
+                        border: isMonthBlocked ? "2px solid rgba(192,57,43,.4)" : "1px solid rgba(232,135,26,.2)",
+                        transition: "all .2s"
+                      }} 
+                      nohov
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                        <div className="en-h" style={{ fontSize: 13, fontWeight: 700, color: isMonthBlocked ? "var(--vr2)" : "var(--cr)" }}>{monLbl}</div>
+                        <span style={{ fontSize: 18, cursor: "pointer" }} onClick={() => {
+                          const bm = slots.blockedMonths || [];
+                          const nb = isMonthBlocked ? bm.filter(m => m !== monthKey) : [...bm, monthKey];
+                          const ns = { ...slots, blockedMonths: nb };
+                          DB.set("tc_slots", ns);
+                          setSlots(ns);
+                          toast(isMonthBlocked ? (isTa ? "மாதம் திறக்கப்பட்டது" : "Month Unblocked") : (isTa ? "மாதம் தடுக்கப்பட்டது" : "Month Blocked"), "info");
+                        }}>{isMonthBlocked ? "🔒" : "🔓"}</span>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2, marginBottom: 8 }}>
+                        {(isTa ? ["ஞா", "திங்", "செ", "புத", "வியா", "வெ", "சனி"] : ["S", "M", "T", "W", "T", "F", "Sa"]).map(h => (
+                          <div key={h} style={{ textAlign: "center", fontSize: 9, color: "var(--mu)", fontWeight: 700, padding: "3px 0" }}>{h}</div>
+                        ))}
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2 }}>
+                        {Array(fd).fill(null).map((_, i) => <div key={"e" + i} style={{ fontSize: 9 }} />)}
+                        {Array(dm).fill(null).map((_, i) => {
+                          const day = i + 1;
+                          const dateStr = yr + "-" + String(mo + 1).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+                          const isDateBlocked = blockedDates.includes(dateStr);
+                          const isMonthAllBlocked = isMonthBlocked;
+                          
+                          return (
+                            <div 
+                              key={day} 
+                              onClick={() => {
+                                if(!isMonthAllBlocked) {
+                                  const bd = blockedDates || [];
+                                  const nbd = isDateBlocked ? bd.filter(d => d !== dateStr) : [...bd, dateStr];
+                                  const ns = { ...slots, blockedDates: nbd };
+                                  DB.set("tc_slots", ns);
+                                  setSlots(ns);
+                                  toast(isDateBlocked ? (isTa ? "தேதி திறக்கப்பட்டது" : "Date Unblocked") : (isTa ? "தேதி தடுக்கப்பட்டது" : "Date Blocked"), "info");
+                                }
+                              }}
+                              style={{ 
+                                textAlign: "center", 
+                                fontSize: 10, 
+                                padding: "4px 2px", 
+                                background: isMonthAllBlocked ? "rgba(192,57,43,.25)" : isDateBlocked ? "rgba(192,57,43,.3)" : "rgba(232,135,26,.1)", 
+                                borderRadius: 3, 
+                                color: isMonthAllBlocked || isDateBlocked ? "var(--vr2)" : "var(--sf)", 
+                                fontWeight: 600,
+                                cursor: isMonthAllBlocked ? "not-allowed" : "pointer",
+                                opacity: isMonthAllBlocked ? 0.7 : 1,
+                                border: isDateBlocked ? "1px solid rgba(192,57,43,.5)" : "1px solid transparent",
+                                transition: "all .15s"
+                              }}
+                            >
+                              {day}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className={isTa ? "ta" : ""} style={{ marginTop: 8, fontSize: 10.5, textAlign: "center", color: isMonthBlocked ? "var(--vr2)" : "var(--mu)", fontWeight: 600 }}>{isMonthBlocked ? (isTa ? "மாதம் தடுக்கப்பட்டது" : "MONTH BLOCKED") : (isTa ? "கிடைக்கும்" : "OPEN")}</div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
